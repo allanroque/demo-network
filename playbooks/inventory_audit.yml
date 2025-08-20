@@ -1,0 +1,50 @@
+---
+- name: Auditoria de Inventário de Rede
+  hosts: "{{ target_group | default('all') }}"
+  gather_facts: no
+  tasks:
+
+    - name: Coletar facts Cisco IOS
+      when: ansible_network_os == "cisco.ios.ios"
+      cisco.ios.ios_facts:
+      register: cisco_facts
+
+    - name: Mostrar informações Cisco
+      when: ansible_network_os == "cisco.ios.ios"
+      debug:
+        msg:
+          - "Dispositivo: {{ inventory_hostname }}"
+          - "Hostname: {{ cisco_facts.ansible_facts.ansible_net_hostname }}"
+          - "Modelo: {{ cisco_facts.ansible_facts.ansible_net_model }}"
+          - "Versão: {{ cisco_facts.ansible_facts.ansible_net_version }}"
+          - "Serial: {{ cisco_facts.ansible_facts.ansible_net_serialnum }}"
+
+    - name: Coletar facts Arista EOS
+      when: ansible_network_os == "arista.eos.eos"
+      arista.eos.eos_facts:
+      register: arista_facts
+
+    - name: Mostrar informações Arista
+      when: ansible_network_os == "arista.eos.eos"
+      debug:
+        msg:
+          - "Dispositivo: {{ inventory_hostname }}"
+          - "Hostname: {{ arista_facts.ansible_facts.ansible_net_hostname }}"
+          - "Modelo: {{ arista_facts.ansible_facts.ansible_net_model }}"
+          - "Versão: {{ arista_facts.ansible_facts.ansible_net_version }}"
+          - "Serial: {{ arista_facts.ansible_facts.ansible_net_serialnum }}"
+
+    - name: Coletar facts Juniper Junos
+      when: ansible_network_os == "junipernetworks.junos.junos"
+      junipernetworks.junos.junos_facts:
+      register: junos_facts
+
+    - name: Mostrar informações Juniper
+      when: ansible_network_os == "junipernetworks.junos.junos"
+      debug:
+        msg:
+          - "Dispositivo: {{ inventory_hostname }}"
+          - "Hostname: {{ junos_facts.ansible_facts.ansible_net_hostname }}"
+          - "Modelo: {{ junos_facts.ansible_facts.ansible_net_model }}"
+          - "Versão: {{ junos_facts.ansible_facts.ansible_net_version }}"
+          - "Serial: {{ junos_facts.ansible_facts.ansible_net_serialnum }}"
