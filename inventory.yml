@@ -128,15 +128,6 @@
         hosts_var: "all_hosts"
 
   tasks:
-    - name: Verificar se a organização existe (somente leitura)
-      ansible.controller.organization_info:
-        name: "{{ ac_organization }}"
-      register: orginfo
-
-    - name: Falhar se a organização não existir
-      ansible.builtin.fail:
-        msg: "A organização '{{ ac_organization }}' não existe ou a credencial não tem permissão de leitura."
-      when: orginfo.resources | length == 0
 
     - name: Criar/atualizar inventários
       ansible.controller.inventory:
