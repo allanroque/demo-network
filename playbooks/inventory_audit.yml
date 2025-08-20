@@ -1,17 +1,71 @@
 ---
-- name: Cisco facts + debug (read-only)
-  hosts: cisco
+- name: Auditoria de Inventário de Rede (IOS/EOS/JUNOS)
+  hosts: "{{ target_group | default('all') }}"
   gather_facts: no
-  tasks:
-    - name: Coletar facts (IOS)
-      cisco.ios.ios_facts:
-      register: f
 
-    - name: Exibir infos básicas
+  tasks:
+    - name: Sanity IOS (show version)
+      when: ansible_network_os == 'ios'
+      cisco.ios.ios_command:
+        commands: "show version | i Version"
+      register: ios_sv
+      changed_when: false
+      failed_when: false
+
+    - name: Sanity EOS (show version)
+      when: ansible_network_os == 'eos'
+      arista.eos.eos_command:
+        commands: "show version | include Software image version"
+      register: eos_sv
+      changed_when: false
+      failed_when: false
+
+    - name: Sanity JUNOS (get-software-information)
+      when: ansible_network_os == 'junos'
+      junipernetworks.junos.junos_rpc:
+        rpc: get-software-information
+      register: junos_sw
+      changed_when: false
+      failed_when: false
+
+    # ===== Coleta de facts (com block/rescue) =====
+    - name: Init
+      set_fact: { vendor_out: {} }
+
+    - block:
+        - name: Facts IOS
+          when: ansible_network_os == 'ios'
+          cisco.ios.ios_facts:
+          register: vendor_out
+      rescue:
+        - set_fact: { vendor_out: {} }
+
+    - block:
+        - name: Facts EOS
+          when: ansible_network_os == 'eos'
+          arista.eos.eos_facts:
+          register: vendor_out
+      rescue:
+        - set_fact: { vendor_out: {} }
+
+    - block:
+        - name: Facts JUNOS
+          when: ansible_network_os == 'junos'
+          junipernetworks.junos.junos_facts:
+          register: vendor_out
+      rescue:
+        - set_fact: { vendor_out: {} }
+
+    - name: Normalizar inventário
+      set_fact:
+        inv_norm:
+          device:   "{{ inventory_hostname }}"
+          os:       "{{ ansible_network_os | default('N/D') }}"
+          hostname: "{{ (vendor_out.ansible_facts | default({})).ansible_net_hostname | default('N/D') }}"
+          model:    "{{ (vendor_out.ansible_facts | default({})).ansible_net_model    | default('N/D') }}"
+          version:  "{{ (vendor_out.ansible_facts | default({})).ansible_net_version  | default('N/D') }}"
+          serial:   "{{ (vendor_out.ansible_facts | default({})).ansible_net_serialnum| default('N/D') }}"
+
+    - name: Exibir inventário
       debug:
-        msg:
-          - "Device:   {{ inventory_hostname }}"
-          - "Hostname: {{ f.ansible_facts.ansible_net_hostname | default('N/D') }}"
-          - "Modelo:   {{ f.ansible_facts.ansible_net_model    | default('N/D') }}"
-          - "Versão:   {{ f.ansible_facts.ansible_net_version  | default('N/D') }}"
-          - "Serial:   {{ f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
+        var: inv_norm
