@@ -1,0 +1,67 @@
+---
+- name: Configuração base do ambiente NETOPS
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ac_organization: SEC
+    ac_inventory: INV-NETOPS
+    hosts_data:
+      rtr1dc1: { ansible_host: "3.142.54.192", private_ip: "172.16.92.125", groups: ["cisco", "dc1"] }
+      rtr2dc1: { ansible_host: "18.191.154.37", private_ip: "172.18.252.223", groups: ["arista", "dc1"] }
+      rtr4dc1: { ansible_host: "3.135.187.207", private_ip: "172.18.87.178", groups: ["arista", "dc1"] }
+      rtr3dc1: { ansible_host: "18.216.125.168", private_ip: "172.16.190.27", groups: ["juniper", "dc1"] }
+      rtr1dc2: { ansible_host: "3.144.45.6", private_ip: "172.16.3.140", groups: ["cisco", "dc2"] }
+      rtr2dc2: { ansible_host: "3.17.157.91", private_ip: "172.18.117.41", groups: ["arista", "dc2"] }
+      rtr4dc2: { ansible_host: "18.117.145.31", private_ip: "172.18.117.15", groups: ["arista", "dc2"] }
+      rtr3dc2: { ansible_host: "18.119.29.169", private_ip: "172.16.133.152", groups: ["juniper", "dc1"] }
+      rtr1dc3: { ansible_host: "3.144.11.102", private_ip: "172.16.49.114", groups: ["cisco", "dc2"] }
+      rtr2dc3: { ansible_host: "3.145.59.51", private_ip: "172.18.50.122", groups: ["arista", "dc2"] }
+      rtr4dc3: { ansible_host: "3.142.136.201", private_ip: "172.18.109.229", groups: ["arista", "dc2"] }
+      rtr3dc3: { ansible_host: "3.145.16.31", private_ip: "172.16.134.128", groups: ["juniper", "dc2"] }
+      rtr1dc4: { ansible_host: "3.145.125.190", private_ip: "172.16.174.40", groups: ["cisco", "dc2"] }
+      rtr2dc4: { ansible_host: "18.219.229.10", private_ip: "172.18.165.199", groups: ["arista", "dc2"] }
+      rtr4dc4: { ansible_host: "3.137.182.89", private_ip: "172.18.162.230", groups: ["arista", "dc2"] }
+      rtr3dc4: { ansible_host: "18.223.241.112", private_ip: "172.16.97.87", groups: ["juniper", "dc2"] }
+
+    groups_list: ["cisco", "arista", "juniper", "dc1", "dc2"]
+
+  tasks:
+
+    - name: Criar inventário NETOPS
+      ansible.controller.inventory:
+        name: "{{ ac_inventory }}"
+        description: "Inventário multi-vendor NETOPS"
+        organization: "{{ ac_organization }}"
+        state: present
+
+    - name: Criar grupos base
+      ansible.controller.group:
+        name: "{{ item }}"
+        inventory: "{{ ac_inventory }}"
+        state: present
+      loop: "{{ groups_list }}"
+
+    - name: Criar hosts com variáveis
+      ansible.controller.host:
+        name: "{{ item.key }}"
+        inventory: "{{ ac_inventory }}"
+        enabled: true
+        variables: |
+          ansible_host: {{ item.value.ansible_host }}
+          private_ip: {{ item.value.private_ip }}
+      loop: "{{ hosts_data | dict2items }}"
+
+    - name: Associar hosts aos grupos
+      ansible.controller.group:
+        name: "{{ group }}"
+        inventory: "{{ ac_inventory }}"
+        preserve_existing_hosts: true
+        hosts: "{{ item.key }}"
+      loop: "{{ hosts_data | dict2items }}"
+      loop_control:
+        loop_var: item
+      vars:
+        groups: "{{ item.value.groups }}"
+      with_items: "{{ item.value.groups }}"
