@@ -1,20 +1,20 @@
 ---
 - name: Coleta de facts Cisco/Arista/Juniper
-  hosts: all
+  hosts: routers
   gather_facts: no
 
   tasks:
-    - name: Coletar facts Cisco IOS
+    - name: Cisco IOS facts
       cisco.ios.ios_facts:
       register: f
       when: ansible_network_os == "ios"
 
-    - name: Coletar facts Arista EOS
+    - name: Arista EOS facts
       arista.eos.eos_facts:
       register: f
       when: ansible_network_os == "eos"
 
-    - name: Coletar facts Juniper Junos
+    - name: Juniper Junos facts
       junipernetworks.junos.junos_facts:
       register: f
       when: ansible_network_os == "junos"
