@@ -2,8 +2,11 @@
 - name: SNMP configuration via survey
   hosts: cisco
   gather_facts: false
-
   tasks:
-    - name: Configure SNMP from survey
-      cisco.ios.ios_config:
-        commands: "{{ snmp_cmds }}"
+  - name: Split survey string into list
+    set_fact:
+      snmp_list: "{{ snmp_cmds.splitlines() }}"
+
+  - name: Configure SNMP from survey
+    cisco.ios.ios_config:
+      commands: "{{ snmp_list }}"
