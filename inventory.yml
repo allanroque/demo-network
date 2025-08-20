@@ -5,7 +5,7 @@
   gather_facts: false
 
   vars:
-    ac_organization: SEC
+    ac_organization: NETOPS
 
     # Variáveis por grupo (aplicadas em cada inventário)
     group_vars:
