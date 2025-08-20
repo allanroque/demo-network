@@ -1,14 +1,13 @@
 =---
-- name: Configuração base do ambiente NETOPS
+- name: Configuração dos inventários NV-DC1-NETOPS e NV-DC2-NETOPS
   hosts: localhost
   connection: local
   gather_facts: false
   vars:
-    ac_organization: NETOPS
-    ac_inv_netops: INV-NETOPS
+    ac_organization: SEC
 
-    # Hosts e grupos a que pertencem
-    netops_hosts:
+    # Hosts filtrados por DC
+    dc1_hosts:
       rtr1dc1:
         groups: [cisco, dc1]
         vars:
@@ -39,6 +38,8 @@
         vars:
           ansible_host: 18.119.29.169
           private_ip: 172.16.133.152
+
+    dc2_hosts:
       rtr1dc2:
         groups: [cisco, dc2]
         vars:
@@ -90,7 +91,7 @@
           ansible_host: 18.223.241.112
           private_ip: 172.16.97.87
 
-    # Variáveis específicas por grupo
+    # Variáveis por grupo
     netops_groups:
       cisco:
         ansible_network_os: ios
@@ -112,36 +113,76 @@
         name: "{{ ac_organization }}"
         state: present
 
-    - name: Criar inventário NETOPS
+#######################
+# INVENTÁRIO DC1
+#######################
+    - name: Criar inventário NV-DC1-NETOPS
       ansible.controller.inventory:
-        name: "{{ ac_inv_netops }}"
-        description: "Inventário de dispositivos de rede"
+        name: NV-DC1-NETOPS
+        description: "Inventário apenas do Datacenter 1"
         organization: "{{ ac_organization }}"
         state: present
 
-    - name: Criar grupos base com variáveis
+    - name: Criar grupos base em NV-DC1-NETOPS
       ansible.controller.group:
         name: "{{ item.key }}"
-        inventory: "{{ ac_inv_netops }}"
+        inventory: NV-DC1-NETOPS
         state: present
         variables: "{{ item.value }}"
       loop: "{{ lookup('dict', netops_groups) }}"
 
-    - name: Criar hosts com variáveis
+    - name: Criar hosts DC1 com variáveis
       ansible.controller.host:
         name: "{{ item.key }}"
-        inventory: "{{ ac_inv_netops }}"
+        inventory: NV-DC1-NETOPS
         enabled: true
         variables: "{{ item.value.vars }}"
-      loop: "{{ lookup('dict', netops_hosts) }}"
+      loop: "{{ lookup('dict', dc1_hosts) }}"
 
-    - name: Associar hosts aos grupos
+    - name: Associar hosts DC1 aos grupos
       ansible.controller.group:
         name: "{{ item.1 }}"
-        inventory: "{{ ac_inv_netops }}"
+        inventory: NV-DC1-NETOPS
         hosts:
           - "{{ item.0.key }}"
         preserve_existing_hosts: true
-      loop: "{{ lookup('dict', netops_hosts) | subelements('value.groups') }}"
+      loop: "{{ lookup('dict', dc1_hosts) | subelements('value.groups') }}"
+      loop_control:
+        label: "{{ item.0.key }} -> {{ item.1 }}"
+
+#######################
+# INVENTÁRIO DC2
+#######################
+    - name: Criar inventário NV-DC2-NETOPS
+      ansible.controller.inventory:
+        name: NV-DC2-NETOPS
+        description: "Inventário apenas do Datacenter 2"
+        organization: "{{ ac_organization }}"
+        state: present
+
+    - name: Criar grupos base em NV-DC2-NETOPS
+      ansible.controller.group:
+        name: "{{ item.key }}"
+        inventory: NV-DC2-NETOPS
+        state: present
+        variables: "{{ item.value }}"
+      loop: "{{ lookup('dict', netops_groups) }}"
+
+    - name: Criar hosts DC2 com variáveis
+      ansible.controller.host:
+        name: "{{ item.key }}"
+        inventory: NV-DC2-NETOPS
+        enabled: true
+        variables: "{{ item.value.vars }}"
+      loop: "{{ lookup('dict', dc2_hosts) }}"
+
+    - name: Associar hosts DC2 aos grupos
+      ansible.controller.group:
+        name: "{{ item.1 }}"
+        inventory: NV-DC2-NETOPS
+        hosts:
+          - "{{ item.0.key }}"
+        preserve_existing_hosts: true
+      loop: "{{ lookup('dict', dc2_hosts) | subelements('value.groups') }}"
       loop_control:
         label: "{{ item.0.key }} -> {{ item.1 }}"
