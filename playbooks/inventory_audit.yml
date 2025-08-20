@@ -4,47 +4,44 @@
   gather_facts: no
   tasks:
 
-    - name: Coletar facts Cisco IOS
-      when: ansible_network_os == "cisco.ios.ios"
-      cisco.ios.ios_facts:
-      register: cisco_facts
+    - name: Cisco IOS facts
+      ios_facts:
+      register: ios_out
+      when: ansible_network_os == "ios"
 
-    - name: Mostrar informações Cisco
-      when: ansible_network_os == "cisco.ios.ios"
+    - name: Mostrar infos Cisco
       debug:
         msg:
-          - "Dispositivo: {{ inventory_hostname }}"
-          - "Hostname: {{ cisco_facts.ansible_facts.ansible_net_hostname }}"
-          - "Modelo: {{ cisco_facts.ansible_facts.ansible_net_model }}"
-          - "Versão: {{ cisco_facts.ansible_facts.ansible_net_version }}"
-          - "Serial: {{ cisco_facts.ansible_facts.ansible_net_serialnum }}"
+          - "Hostname: {{ ios_out.ansible_facts.ansible_net_hostname }}"
+          - "Modelo: {{ ios_out.ansible_facts.ansible_net_model }}"
+          - "Versão: {{ ios_out.ansible_facts.ansible_net_version }}"
+          - "Serial: {{ ios_out.ansible_facts.ansible_net_serialnum }}"
+      when: ios_out is defined
 
-    - name: Coletar facts Arista EOS
-      when: ansible_network_os == "arista.eos.eos"
-      arista.eos.eos_facts:
-      register: arista_facts
+    - name: Arista EOS facts
+      eos_facts:
+      register: eos_out
+      when: ansible_network_os == "eos"
 
-    - name: Mostrar informações Arista
-      when: ansible_network_os == "arista.eos.eos"
+    - name: Mostrar infos Arista
       debug:
         msg:
-          - "Dispositivo: {{ inventory_hostname }}"
-          - "Hostname: {{ arista_facts.ansible_facts.ansible_net_hostname }}"
-          - "Modelo: {{ arista_facts.ansible_facts.ansible_net_model }}"
-          - "Versão: {{ arista_facts.ansible_facts.ansible_net_version }}"
-          - "Serial: {{ arista_facts.ansible_facts.ansible_net_serialnum }}"
+          - "Hostname: {{ eos_out.ansible_facts.ansible_net_hostname }}"
+          - "Modelo: {{ eos_out.ansible_facts.ansible_net_model }}"
+          - "Versão: {{ eos_out.ansible_facts.ansible_net_version }}"
+          - "Serial: {{ eos_out.ansible_facts.ansible_net_serialnum }}"
+      when: eos_out is defined
 
-    - name: Coletar facts Juniper Junos
-      when: ansible_network_os == "junipernetworks.junos.junos"
-      junipernetworks.junos.junos_facts:
-      register: junos_facts
+    - name: Juniper Junos facts
+      junos_facts:
+      register: junos_out
+      when: ansible_network_os == "junos"
 
-    - name: Mostrar informações Juniper
-      when: ansible_network_os == "junipernetworks.junos.junos"
+    - name: Mostrar infos Juniper
       debug:
         msg:
-          - "Dispositivo: {{ inventory_hostname }}"
-          - "Hostname: {{ junos_facts.ansible_facts.ansible_net_hostname }}"
-          - "Modelo: {{ junos_facts.ansible_facts.ansible_net_model }}"
-          - "Versão: {{ junos_facts.ansible_facts.ansible_net_version }}"
-          - "Serial: {{ junos_facts.ansible_facts.ansible_net_serialnum }}"
+          - "Hostname: {{ junos_out.ansible_facts.ansible_net_hostname }}"
+          - "Modelo: {{ junos_out.ansible_facts.ansible_net_model }}"
+          - "Versão: {{ junos_out.ansible_facts.ansible_net_version }}"
+          - "Serial: {{ junos_out.ansible_facts.ansible_net_serialnum }}"
+      when: junos_out is defined
