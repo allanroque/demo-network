@@ -1,30 +1,53 @@
 ---
-- name: Coleta de facts Cisco/Arista/Juniper
+- name: Coleta de facts (Cisco / Arista / Juniper)
   hosts: routers
   gather_facts: no
 
   tasks:
-    - name: Cisco IOS facts
+    # Cisco
+    - name: Coletar facts Cisco IOS
       cisco.ios.ios_facts:
-      register: f
+      register: cisco_f
       when: ansible_network_os == "ios"
 
-    - name: Arista EOS facts
-      arista.eos.eos_facts:
-      register: f
-      when: ansible_network_os == "eos"
-
-    - name: Juniper Junos facts
-      junipernetworks.junos.junos_facts:
-      register: f
-      when: ansible_network_os == "junos"
-
-    - name: Mostrar informações básicas
+    - name: Debug Cisco IOS
       debug:
         msg:
           - "Device:   {{ inventory_hostname }}"
-          - "Hostname: {{ f.ansible_facts.ansible_net_hostname | default('N/D') }}"
-          - "Modelo:   {{ f.ansible_facts.ansible_net_model    | default('N/D') }}"
-          - "Versão:   {{ f.ansible_facts.ansible_net_version  | default('N/D') }}"
-          - "Serial:   {{ f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
-      when: f is defined
+          - "Hostname: {{ cisco_f.ansible_facts.ansible_net_hostname | default('N/D') }}"
+          - "Modelo:   {{ cisco_f.ansible_facts.ansible_net_model    | default('N/D') }}"
+          - "Versão:   {{ cisco_f.ansible_facts.ansible_net_version  | default('N/D') }}"
+          - "Serial:   {{ cisco_f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
+      when: cisco_f is defined
+
+    # Arista
+    - name: Coletar facts Arista EOS
+      arista.eos.eos_facts:
+      register: arista_f
+      when: ansible_network_os == "eos"
+
+    - name: Debug Arista EOS
+      debug:
+        msg:
+          - "Device:   {{ inventory_hostname }}"
+          - "Hostname: {{ arista_f.ansible_facts.ansible_net_hostname | default('N/D') }}"
+          - "Modelo:   {{ arista_f.ansible_facts.ansible_net_model    | default('N/D') }}"
+          - "Versão:   {{ arista_f.ansible_facts.ansible_net_version  | default('N/D') }}"
+          - "Serial:   {{ arista_f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
+      when: arista_f is defined
+
+    # Juniper
+    - name: Coletar facts Juniper Junos
+      junipernetworks.junos.junos_facts:
+      register: junos_f
+      when: ansible_network_os == "junos"
+
+    - name: Debug Juniper Junos
+      debug:
+        msg:
+          - "Device:   {{ inventory_hostname }}"
+          - "Hostname: {{ junos_f.ansible_facts.ansible_net_hostname | default('N/D') }}"
+          - "Modelo:   {{ junos_f.ansible_facts.ansible_net_model    | default('N/D') }}"
+          - "Versão:   {{ junos_f.ansible_facts.ansible_net_version  | default('N/D') }}"
+          - "Serial:   {{ junos_f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
+      when: junos_f is defined
