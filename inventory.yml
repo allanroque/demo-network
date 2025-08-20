@@ -35,7 +35,7 @@
     dc1_all:    [rtr1, rtr2, rtr3, rtr4]
     dc1_cisco:  [rtr1]
     dc1_arista: [rtr2, rtr4]
-    dc1_juniper:[rtr3]
+    dc1_juniper: [rtr3]
 
     ######################################################################
     # DC2  -> nomes rtr1..rtr8  (apenas DC2 + DC3, sem DC4)
@@ -54,7 +54,7 @@
     dc2_all:    [rtr1, rtr2, rtr3, rtr4, rtr5, rtr6, rtr7, rtr8]
     dc2_cisco:  [rtr1, rtr5]
     dc2_arista: [rtr2, rtr4, rtr6, rtr8]
-    dc2_juniper:[rtr3, rtr7]
+    dc2_juniper: [rtr3, rtr7]
 
     ######################################################################
     # INV-NET (consolidado) -> nomes únicos: dc1-rtrX / dc2-rtrY
@@ -78,7 +78,7 @@
     net_dc2:    [dc2-rtr1, dc2-rtr2, dc2-rtr3, dc2-rtr4, dc2-rtr5, dc2-rtr6, dc2-rtr7, dc2-rtr8]
     net_cisco:  [dc1-rtr1, dc2-rtr1, dc2-rtr5]
     net_arista: [dc1-rtr2, dc1-rtr4, dc2-rtr2, dc2-rtr4, dc2-rtr6, dc2-rtr8]
-    net_juniper:[dc1-rtr3, dc2-rtr3, dc2-rtr7]
+    net_juniper: [dc1-rtr3, dc2-rtr3, dc2-rtr7]
 
   tasks:
     ######################################################################
