@@ -1,0 +1,9 @@
+---
+- name: SNMP configuration via survey
+  hosts: cisco
+  gather_facts: false
+
+  tasks:
+    - name: Configure SNMP from survey
+      cisco.ios.ios_config:
+        commands: "{{ snmp_cmds }}"
