@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   vars:
-    ac_organization: NETOPS
+    ac_organization: SEC
     ac_inv_netops: INV-NETOPS
 
     netops_hosts:
@@ -124,13 +124,11 @@
 
     - name: Associar hosts aos grupos
       ansible.controller.group:
-        name: "{{ group }}"
+        name: "{{ item.1 }}"
         inventory: "{{ ac_inv_netops }}"
         hosts:
-          - "{{ item.key }}"
+          - "{{ item.0.key }}"
         preserve_existing_hosts: true
       loop: "{{ lookup('dict', netops_hosts) | subelements('value.groups') }}"
       loop_control:
         label: "{{ item.0.key }} -> {{ item.1 }}"
-      vars:
-        group: "{{ item.1 }}"
