@@ -1,72 +1,74 @@
 ---
-- name: Auditoria de Inventário de Rede (IOS/EOS/JUNOS)
-  hosts: "{{ target_group | default('all') }}"
+- name: Coleta Cisco (read-only) - debug completo
+  hosts: cisco
   gather_facts: no
 
+  # Força uso de senha e evita chave/agent no network_cli
   vars:
-    ssh_common_args: >-
-      -o PreferredAuthentications=password,keyboard-interactive
-      -o PubkeyAuthentication=no
+
+    # Comandos de show (pode ajustar livremente)
+    ios_show_cmds:
+      version: "show version"
+      inventory: "show inventory"
+      udi: "show license udi"
+      ip_int_brief: "show ip interface brief"
+      int_status: "show interfaces status"
+      cdp_detail: "show cdp neighbors detail"
+      lldp_detail: "show lldp neighbors detail"
+      vlan_brief: "show vlan brief"
+      etherchannel: "show etherchannel summary"
+      route_summary: "show ip route summary"
+      bgp_summary: "show ip bgp summary"
+      ospf_neighbor: "show ip ospf neighbor"
+      env_all: "show environment all"
+      power_inline: "show power inline"
+      logging_last: "show logging | last 50"
 
   tasks:
-    - name: Forçar autenticação por senha
+    - name: Sanity - show clock (não falha)
+      cisco.ios.ios_command:
+        commands: "show clock"
+      register: sanity
+      changed_when: false
+      failed_when: false
+
+    - name: Coletar ios_facts (com enable; não falha)
+      cisco.ios.ios_facts:
+      register: facts
+      become: true
+      become_method: enable
+      failed_when: false
+
+    - name: Executar comandos de show (um por vez; não falha)
+      cisco.ios.ios_command:
+        commands: "{{ item.value }}"
+      loop: "{{ ios_show_cmds | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: shows
+      become: true
+      become_method: enable
+      changed_when: false
+      failed_when: false
+
+    - name: Inicializar dicionário consolidado dos shows
       set_fact:
-        ansible_ssh_common_args: "{{ ssh_common_args }}"
-      when: ansible_connection in ['network_cli', 'netconf']
+        shows_map: {}
 
-    - name: Inicializar variável de saída
+    - name: Consolidar saída dos shows em {nome: stdout}
       set_fact:
-        vendor_out: {}
+        shows_map: "{{ shows_map | combine({ item.item.key: (item.stdout | default([])) }) }}"
+      loop: "{{ shows.results | default([]) }}"
 
-    # ===== Cisco IOS =====
-    - block:
-        - name: Coletar facts (IOS)
-          ios_facts:
-          register: vendor_out
-      when: ansible_network_os == 'ios'
-      rescue:
-        - name: Marcar coleta IOS como vazia
-          set_fact:
-            vendor_out: {}
-
-    # ===== Arista EOS =====
-    - block:
-        - name: Coletar facts (EOS)
-          eos_facts:
-          register: vendor_out
-      when: ansible_network_os == 'eos'
-      rescue:
-        - name: Marcar coleta EOS como vazia
-          set_fact:
-            vendor_out: {}
-
-    # ===== Juniper JUNOS =====
-    - block:
-        - name: Coletar facts (JUNOS)
-          junos_facts:
-          register: vendor_out
-      when: ansible_network_os == 'junos'
-      rescue:
-        - name: Marcar coleta JUNOS como vazia
-          set_fact:
-            vendor_out: {}
-
-    - name: Normalizar inventário
-      set_fact:
-        inv_norm:
-          device:   "{{ inventory_hostname }}"
-          os:       "{{ ansible_network_os | default('N/D') }}"
-          hostname: "{{ (vendor_out.ansible_facts | default({})).ansible_net_hostname | default('N/D') }}"
-          model:    "{{ (vendor_out.ansible_facts | default({})).ansible_net_model    | default('N/D') }}"
-          version:  "{{ (vendor_out.ansible_facts | default({})).ansible_net_version  | default('N/D') }}"
-          serial:   "{{ (vendor_out.ansible_facts | default({})).ansible_net_serialnum| default('N/D') }}"
-
-    - name: Exibir inventário normalizado
+    # ======= DEBUG TOTAL =======
+    - name: DEBUG - sanity (show clock)
       debug:
-        msg:
-          - "Device:   {{ inv_norm.device }}"
-          - "OS:       {{ inv_norm.os }}"
-          - "Hostname: {{ inv_norm.hostname }}"
-          - "Modelo:   {{ inv_norm.model }}"
-          - "Versão:   {{ inv_norm.version }}"
-          - "Serial:   {{ inv_norm.serial }}"
+        var: sanity.stdout
+
+    - name: DEBUG - ios_facts completo
+      debug:
+        var: facts
+
+    - name: DEBUG - todos os 'show' (mapa {nome: stdout})
+      debug:
+        var: shows_map
