@@ -13,9 +13,9 @@
       debug:
         msg:
           - "Hostname: {{ ios_out.ansible_facts.ansible_net_hostname }}"
-          - "Modelo: {{ ios_out.ansible_facts.ansible_net_model }}"
-          - "Versão: {{ ios_out.ansible_facts.ansible_net_version }}"
-          - "Serial: {{ ios_out.ansible_facts.ansible_net_serialnum }}"
+          - "Modelo:   {{ ios_out.ansible_facts.ansible_net_model }}"
+          - "Versão:   {{ ios_out.ansible_facts.ansible_net_version }}"
+          - "Serial:   {{ ios_out.ansible_facts.ansible_net_serialnum }}"
       when: ios_out is defined
 
     - name: Arista EOS facts
@@ -27,9 +27,9 @@
       debug:
         msg:
           - "Hostname: {{ eos_out.ansible_facts.ansible_net_hostname }}"
-          - "Modelo: {{ eos_out.ansible_facts.ansible_net_model }}"
-          - "Versão: {{ eos_out.ansible_facts.ansible_net_version }}"
-          - "Serial: {{ eos_out.ansible_facts.ansible_net_serialnum }}"
+          - "Modelo:   {{ eos_out.ansible_facts.ansible_net_model }}"
+          - "Versão:   {{ eos_out.ansible_facts.ansible_net_version }}"
+          - "Serial:   {{ eos_out.ansible_facts.ansible_net_serialnum }}"
       when: eos_out is defined
 
     - name: Juniper Junos facts
@@ -41,7 +41,7 @@
       debug:
         msg:
           - "Hostname: {{ junos_out.ansible_facts.ansible_net_hostname }}"
-          - "Modelo: {{ junos_out.ansible_facts.ansible_net_model }}"
-          - "Versão: {{ junos_out.ansible_facts.ansible_net_version }}"
-          - "Serial: {{ junos_out.ansible_facts.ansible_net_serialnum }}"
+          - "Modelo:   {{ junos_out.ansible_facts.ansible_net_model }}"
+          - "Versão:   {{ junos_out.ansible_facts.ansible_net_version }}"
+          - "Serial:   {{ junos_out.ansible_facts.ansible_net_serialnum }}"
       when: junos_out is defined
