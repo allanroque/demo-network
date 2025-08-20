@@ -1,0 +1,59 @@
+---
+- name: Coleta de facts por dispositivo (DC1 por padrão)
+  hosts: "{{ target_group | default('dc1') }}"
+  gather_facts: false
+
+  tasks:
+    # Cisco IOS
+    - name: Coletar facts (Cisco IOS)
+      cisco.ios.ios_facts:
+        gather_subset: [hardware]   # versão/model/serial
+      when: ansible_network_os == 'ios'
+
+    # Arista EOS
+    - name: Coletar facts (Arista EOS)
+      arista.eos.eos_facts:
+        gather_subset: [hardware]
+      when: ansible_network_os == 'eos'
+
+    # Juniper JUNOS (NETCONF)
+    - name: Coletar facts (Juniper Junos)
+      junipernetworks.junos.facts:
+        gather_subset: [hardware]
+      when: ansible_network_os == 'junos'
+
+    # Normaliza em um dicionário comum por host
+    - name: Normalizar informações essenciais
+      set_fact:
+        device_info:
+          hostname: "{{ ansible_facts.ansible_net_hostname | default(inventory_hostname) }}"
+          mgmt_ip:  "{{ ansible_host | default(hostvars[inventory_hostname].ansible_host) }}"
+          vendor: >-
+            {% if ansible_network_os == 'ios' %}cisco
+            {% elif ansible_network_os == 'eos' %}arista
+            {% elif ansible_network_os == 'junos' %}juniper
+            {% else %}unknown{% endif %}
+          os: "{{ ansible_network_os | default('unknown') }}"
+          version: "{{ ansible_facts.ansible_net_version | default(ansible_net_version) | default('unknown') }}"
+          model: "{{ ansible_facts.ansible_net_model | default(ansible_net_model) | default('unknown') }}"
+          serial: "{{ ansible_facts.ansible_net_serialnum | default(ansible_net_serialnum) | default(ansible_facts.serialnumber) | default('unknown') }}"
+
+    # Linha CSV por host (a quebra de linha é removida no debug)
+    - name: Montar linha CSV
+      set_fact:
+        device_csv_line: >-
+          {{ device_info.hostname }},{{ device_info.vendor }},{{ device_info.os }},
+          {{ device_info.version }},{{ device_info.model }},{{ device_info.serial }},
+          {{ device_info.mgmt_ip }}
+
+    # DEBUG FINAL: mostra resumo e a CSV já "limpa"
+    - name: Debug final por host
+      debug:
+        msg:
+          hostname: "{{ device_info.hostname }}"
+          os: "{{ device_info.os }}"
+          version: "{{ device_info.version }}"
+          model: "{{ device_info.model }}"
+          serial: "{{ device_info.serial }}"
+          mgmt_ip: "{{ device_info.mgmt_ip }}"
+          csv_line: "{{ device_csv_line | regex_replace('\\s+', ' ') }}"
