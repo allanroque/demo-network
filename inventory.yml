@@ -4,10 +4,9 @@
   connection: local
   gather_facts: false
   vars:
-    ac_organization: NETOPS
+    ac_organization: SEC
     ac_inv_netops: INV-NETOPS
 
-    # Estrutura de hosts e grupos
     netops_hosts:
       rtr1dc1:
         groups: [cisco, dc1]
@@ -130,11 +129,8 @@
         hosts:
           - "{{ item.key }}"
         preserve_existing_hosts: true
-      loop: "{{ lookup('dict', netops_hosts) }}"
+      loop: "{{ lookup('dict', netops_hosts) | subelements('value.groups') }}"
       loop_control:
-        loop_var: item
+        label: "{{ item.0.key }} -> {{ item.1 }}"
       vars:
-        groups: "{{ item.value.groups }}"
-      with_items: "{{ item.value.groups }}"
-      loop_control:
-        loop_var: group
+        group: "{{ item.1 }}"
