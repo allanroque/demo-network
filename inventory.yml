@@ -23,7 +23,7 @@
       dc1: {}
       dc2: {}
 
-    # Hosts do DC1 (apenas estes irão para INV-DC1-NETOPS)
+    # Hosts do DC1 (entram em INV-DC1-NETOPS)
     dc1_hosts:
       rtr1dc1:
         groups: [cisco, dc1]
@@ -46,7 +46,7 @@
           ansible_host: 3.135.187.207
           private_ip: 172.18.87.178
 
-    # Hosts do DC2 (apenas estes irão para INV-DC2-NETOPS)
+    # Hosts do DC2 (entram em INV-DC2-NETOPS)
     dc2_hosts:
       rtr1dc2:
         groups: [cisco, dc2]
@@ -112,7 +112,7 @@
     # Hosts consolidados para INV-NETOPS
     all_hosts: "{{ dc1_hosts | combine(dc2_hosts) }}"
 
-    # Definição dos 3 inventários a serem criados/carregados
+    # Definição dos 3 inventários
     inventories:
       - name: "INV-DC1-NETOPS"
         desc: "Inventário do Datacenter 1"
@@ -127,8 +127,16 @@
         groups: ["cisco","arista","juniper","dc1","dc2"]
         hosts_var: "all_hosts"
 
-  tasks:
+    # Mapa (inventário -> hosts como lista) para facilitar loops com subelements
+    inv_hosts_map:
+      - name: "INV-DC1-NETOPS"
+        hosts: "{{ dc1_hosts | dict2items }}"
+      - name: "INV-DC2-NETOPS"
+        hosts: "{{ dc2_hosts | dict2items }}"
+      - name: "INV-NETOPS"
+        hosts: "{{ all_hosts | dict2items }}"
 
+  tasks:
     - name: Criar/atualizar inventários
       ansible.controller.inventory:
         name: "{{ item.name }}"
@@ -137,49 +145,34 @@
         state: present
       loop: "{{ inventories }}"
 
-    - name: Criar grupos com variáveis em cada inventário
+    - name: Criar grupos com variáveis (em cada inventário)
       ansible.controller.group:
-        name: "{{ grp }}"
-        inventory: "{{ inv.name }}"
+        name: "{{ item.1 }}"
+        inventory: "{{ item.0.name }}"
         state: present
-        variables: "{{ group_vars[grp] }}"
-      loop: "{{ inventories }}"
+        variables: "{{ group_vars[item.1] }}"
+      loop: "{{ query('subelements', inventories, 'groups') }}"
       loop_control:
-        loop_var: inv
-      vars:
-        groups_to_create: "{{ inv.groups }}"
-      with_items: "{{ groups_to_create }}"
-      loop_control:
-        loop_var: grp
+        label: "{{ item.0.name }} :: {{ item.1 }}"
 
-    - name: Criar hosts com variáveis em cada inventário
+    - name: Criar hosts com variáveis (em cada inventário)
       ansible.controller.host:
-        name: "{{ host_item.key }}"
-        inventory: "{{ inv.name }}"
+        name: "{{ item.1.key }}"
+        inventory: "{{ item.0.name }}"
         enabled: true
-        variables: "{{ host_item.value.vars }}"
-      loop: "{{ inventories }}"
+        variables: "{{ item.1.value.vars }}"
+      loop: "{{ query('subelements', inv_hosts_map, 'hosts') }}"
       loop_control:
-        loop_var: inv
-      vars:
-        host_dict: "{{ vars[inv.hosts_var] }}"
-      with_items: "{{ host_dict | dict2items }}"
-      loop_control:
-        loop_var: host_item
+        label: "{{ item.0.name }} :: {{ item.1.key }}"
 
-    - name: Associar hosts aos grupos em cada inventário
+    - name: Associar hosts aos grupos (em cada inventário)
       ansible.controller.group:
-        name: "{{ pair.1 }}"
-        inventory: "{{ inv.name }}"
-        hosts:
-          - "{{ pair.0.key }}"
+        name: "{{ item.1 }}"
+        inventory: "{{ item.0.name }}"
+        hosts: "{{ hosts_for_group }}"
         preserve_existing_hosts: true
-      loop: "{{ inventories }}"
-      loop_control:
-        loop_var: inv
       vars:
-        host_dict: "{{ vars[inv.hosts_var] }}"
-        host_group_pairs: "{{ host_dict | dict2items | subelements('value.groups') }}"
-      with_items: "{{ host_group_pairs }}"
-      loop_control:
-        loop_var: pair
+        # dicionário de hosts (dict) referente ao inventário atual
+        host_dict: "{{ vars[item.0.hosts_var] if item.0.hosts_var is defined else (item.0.name == 'INV-DC1-NETOPS') | ternary(dc1_hosts, (item.0.name == 'INV-DC2-NETOPS') | ternary(dc2_hosts, all_hosts)) }}"
+        # lista de nomes de hosts cujo campo 'groups' contém o grupo alvo
+        hosts_for_grou
