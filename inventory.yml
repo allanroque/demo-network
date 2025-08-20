@@ -1,5 +1,5 @@
 ---
-- name: Configuração dos inventários INV-DC1-NETOPS e INV-DC2-NETOPS
+- name: Configuração dos inventários INV-DC1-NETOPS, INV-DC2-NETOPS e INV-NETOPS (simples)
   hosts: localhost
   connection: local
   gather_facts: false
@@ -7,7 +7,7 @@
   vars:
     ac_organization: NETOPS
 
-    # Variáveis por grupo (aplicadas em cada inventário)
+    # Variáveis por grupo
     group_vars:
       cisco:
         ansible_network_os: ios
@@ -23,99 +23,83 @@
       dc1: {}
       dc2: {}
 
-    # Hosts do DC1 (apenas estes irão para INV-DC1-NETOPS)
+    # -------- DC1 --------
     dc1_hosts:
       rtr1dc1:
         groups: [cisco, dc1]
-        vars:
-          ansible_host: 3.142.54.192
-          private_ip: 172.16.92.125
+        vars: { ansible_host: 3.142.54.192, private_ip: 172.16.92.125 }
       rtr2dc1:
         groups: [arista, dc1]
-        vars:
-          ansible_host: 18.191.154.37
-          private_ip: 172.18.252.223
-      rtr4dc1:
-        groups: [arista, dc1]
-        vars:
-          ansible_host: 3.135.187.207
-          private_ip: 172.18.87.178
-      rtr2dc2:
-        groups: [arista, dc1]
-        vars:
-          ansible_host: 3.17.157.91
-          private_ip: 172.18.117.41
+        vars: { ansible_host: 18.191.154.37, private_ip: 172.18.252.223 }
       rtr3dc1:
         groups: [juniper, dc1]
-        vars:
-          ansible_host: 18.216.125.168
-          private_ip: 172.16.190.27
-      rtr3dc2:
-        groups: [juniper, dc1]
-        vars:
-          ansible_host: 18.119.29.169
-          private_ip: 172.16.133.152
+        vars: { ansible_host: 18.216.125.168, private_ip: 172.16.190.27 }
+      rtr4dc1:
+        groups: [arista, dc1]
+        vars: { ansible_host: 3.135.187.207, private_ip: 172.18.87.178 }
 
-    # Hosts do DC2 (apenas estes irão para INV-DC2-NETOPS)
+    dc1_all_hosts: [rtr1dc1, rtr2dc1, rtr3dc1, rtr4dc1]
+    dc1_cisco_hosts: [rtr1dc1]
+    dc1_arista_hosts: [rtr2dc1, rtr4dc1]
+    dc1_juniper_hosts: [rtr3dc1]
+
+    # -------- DC2 --------
     dc2_hosts:
       rtr1dc2:
         groups: [cisco, dc2]
-        vars:
-          ansible_host: 3.144.45.6
-          private_ip: 172.16.3.140
-      rtr1dc3:
-        groups: [cisco, dc2]
-        vars:
-          ansible_host: 3.144.11.102
-          private_ip: 172.16.49.114
-      rtr1dc4:
-        groups: [cisco, dc2]
-        vars:
-          ansible_host: 3.145.125.190
-          private_ip: 172.16.174.40
+        vars: { ansible_host: 3.144.45.6,  private_ip: 172.16.3.140 }
+      rtr2dc2:
+        groups: [arista, dc2]
+        vars: { ansible_host: 3.17.157.91,  private_ip: 172.18.117.41 }
+      rtr3dc2:
+        groups: [juniper, dc2]
+        vars: { ansible_host: 18.119.29.169, private_ip: 172.16.133.152 }
       rtr4dc2:
         groups: [arista, dc2]
-        vars:
-          ansible_host: 18.117.145.31
-          private_ip: 172.18.117.15
+        vars: { ansible_host: 18.117.145.31, private_ip: 172.18.117.15 }
+      rtr1dc3:
+        groups: [cisco, dc2]
+        vars: { ansible_host: 3.144.11.102, private_ip: 172.16.49.114 }
       rtr2dc3:
         groups: [arista, dc2]
-        vars:
-          ansible_host: 3.145.59.51
-          private_ip: 172.18.50.122
-      rtr4dc3:
-        groups: [arista, dc2]
-        vars:
-          ansible_host: 3.142.136.201
-          private_ip: 172.18.109.229
-      rtr2dc4:
-        groups: [arista, dc2]
-        vars:
-          ansible_host: 18.219.229.10
-          private_ip: 172.18.165.199
-      rtr4dc4:
-        groups: [arista, dc2]
-        vars:
-          ansible_host: 3.137.182.89
-          private_ip: 172.18.162.230
+        vars: { ansible_host: 3.145.59.51,  private_ip: 172.18.50.122 }
       rtr3dc3:
         groups: [juniper, dc2]
-        vars:
-          ansible_host: 3.145.16.31
-          private_ip: 172.16.134.128
+        vars: { ansible_host: 3.145.16.31,  private_ip: 172.16.134.128 }
+      rtr4dc3:
+        groups: [arista, dc2]
+        vars: { ansible_host: 3.142.136.201, private_ip: 172.18.109.229 }
+      rtr1dc4:
+        groups: [cisco, dc2]
+        vars: { ansible_host: 3.145.125.190, private_ip: 172.16.174.40 }
+      rtr2dc4:
+        groups: [arista, dc2]
+        vars: { ansible_host: 18.219.229.10, private_ip: 172.18.165.199 }
       rtr3dc4:
         groups: [juniper, dc2]
-        vars:
-          ansible_host: 18.223.241.112
-          private_ip: 172.16.97.87
+        vars: { ansible_host: 18.223.241.112, private_ip: 172.16.97.87 }
+      rtr4dc4:
+        groups: [arista, dc2]
+        vars: { ansible_host: 3.137.182.89,  private_ip: 172.18.162.230 }
+
+    dc2_all_hosts: [rtr1dc2, rtr2dc2, rtr3dc2, rtr4dc2, rtr1dc3, rtr2dc3, rtr3dc3, rtr4dc3, rtr1dc4, rtr2dc4, rtr3dc4, rtr4dc4]
+    dc2_cisco_hosts: [rtr1dc2, rtr1dc3, rtr1dc4]
+    dc2_arista_hosts: [rtr2dc2, rtr4dc2, rtr2dc3, rtr4dc3, rtr2dc4, rtr4dc4]
+    dc2_juniper_hosts: [rtr3dc2, rtr3dc3, rtr3dc4]
+
+    # -------- Consolidação --------
+    all_hosts: "{{ dc1_hosts | combine(dc2_hosts) }}"
+    all_all_hosts: "{{ dc1_all_hosts + dc2_all_hosts }}"
+    all_cisco_hosts: "{{ dc1_cisco_hosts + dc2_cisco_hosts }}"
+    all_arista_hosts: "{{ dc1_arista_hosts + dc2_arista_hosts }}"
+    all_juniper_hosts: "{{ dc1_juniper_hosts + dc2_juniper_hosts }}"
+    all_dc1_hosts: "{{ dc1_all_hosts }}"
+    all_dc2_hosts: "{{ dc2_all_hosts }}"
 
   tasks:
-    - name: Garantir que a organização existe
-      ansible.controller.organization:
-        name: "{{ ac_organization }}"
-        state: present
-
-    # ===================== DC1 =====================
+    ######################################################################
+    # INVENTÁRIO: INV-DC1-NETOPS
+    ######################################################################
     - name: Criar inventário INV-DC1-NETOPS
       ansible.controller.inventory:
         name: INV-DC1-NETOPS
@@ -123,38 +107,53 @@
         organization: "{{ ac_organization }}"
         state: present
 
-    - name: Criar grupos usados em INV-DC1-NETOPS (cisco/arista/juniper/dc1)
+    - name: Criar grupos INV-DC1-NETOPS (cisco/arista/juniper/dc1)
       ansible.controller.group:
         name: "{{ item }}"
         inventory: INV-DC1-NETOPS
         state: present
         variables: "{{ group_vars[item] }}"
-      loop:
-        - cisco
-        - arista
-        - juniper
-        - dc1
+      loop: [ 'cisco', 'arista', 'juniper', 'dc1' ]
 
-    - name: Criar hosts do DC1 com variáveis
+    - name: Criar hosts DC1 (com variáveis)
       ansible.controller.host:
         name: "{{ item.key }}"
         inventory: INV-DC1-NETOPS
         enabled: true
         variables: "{{ item.value.vars }}"
-      loop: "{{ lookup('dict', dc1_hosts) }}"
+      loop: "{{ dc1_hosts | dict2items }}"
 
-    - name: Associar hosts do DC1 aos grupos
+    - name: Adicionar hosts DC1 ao grupo dc1
       ansible.controller.group:
-        name: "{{ item.1 }}"
+        name: dc1
         inventory: INV-DC1-NETOPS
-        hosts:
-          - "{{ item.0.key }}"
+        hosts: "{{ dc1_all_hosts }}"
         preserve_existing_hosts: true
-      loop: "{{ lookup('dict', dc1_hosts) | subelements('value.groups') }}"
-      loop_control:
-        label: "{{ item.0.key }} -> {{ item.1 }}"
 
-    # ===================== DC2 =====================
+    - name: Adicionar hosts DC1 ao grupo cisco
+      ansible.controller.group:
+        name: cisco
+        inventory: INV-DC1-NETOPS
+        hosts: "{{ dc1_cisco_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar hosts DC1 ao grupo arista
+      ansible.controller.group:
+        name: arista
+        inventory: INV-DC1-NETOPS
+        hosts: "{{ dc1_arista_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar hosts DC1 ao grupo juniper
+      ansible.controller.group:
+        name: juniper
+        inventory: INV-DC1-NETOPS
+        hosts: "{{ dc1_juniper_hosts }}"
+        preserve_existing_hosts: true
+
+    ######################################################################
+    # INVENTÁRIO: INV-DC2-NETOPS
+    ######################################################################
     - name: Criar inventário INV-DC2-NETOPS
       ansible.controller.inventory:
         name: INV-DC2-NETOPS
@@ -162,33 +161,107 @@
         organization: "{{ ac_organization }}"
         state: present
 
-    - name: Criar grupos usados em INV-DC2-NETOPS (cisco/arista/juniper/dc2)
+    - name: Criar grupos INV-DC2-NETOPS (cisco/arista/juniper/dc2)
       ansible.controller.group:
         name: "{{ item }}"
         inventory: INV-DC2-NETOPS
         state: present
         variables: "{{ group_vars[item] }}"
-      loop:
-        - cisco
-        - arista
-        - juniper
-        - dc2
+      loop: [ 'cisco', 'arista', 'juniper', 'dc2' ]
 
-    - name: Criar hosts do DC2 com variáveis
+    - name: Criar hosts DC2 (com variáveis)
       ansible.controller.host:
         name: "{{ item.key }}"
         inventory: INV-DC2-NETOPS
         enabled: true
         variables: "{{ item.value.vars }}"
-      loop: "{{ lookup('dict', dc2_hosts) }}"
+      loop: "{{ dc2_hosts | dict2items }}"
 
-    - name: Associar hosts do DC2 aos grupos
+    - name: Adicionar hosts DC2 ao grupo dc2
       ansible.controller.group:
-        name: "{{ item.1 }}"
+        name: dc2
         inventory: INV-DC2-NETOPS
-        hosts:
-          - "{{ item.0.key }}"
+        hosts: "{{ dc2_all_hosts }}"
         preserve_existing_hosts: true
-      loop: "{{ lookup('dict', dc2_hosts) | subelements('value.groups') }}"
-      loop_control:
-        label: "{{ item.0.key }} -> {{ item.1 }}"
+
+    - name: Adicionar hosts DC2 ao grupo cisco
+      ansible.controller.group:
+        name: cisco
+        inventory: INV-DC2-NETOPS
+        hosts: "{{ dc2_cisco_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar hosts DC2 ao grupo arista
+      ansible.controller.group:
+        name: arista
+        inventory: INV-DC2-NETOPS
+        hosts: "{{ dc2_arista_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar hosts DC2 ao grupo juniper
+      ansible.controller.group:
+        name: juniper
+        inventory: INV-DC2-NETOPS
+        hosts: "{{ dc2_juniper_hosts }}"
+        preserve_existing_hosts: true
+
+    ######################################################################
+    # INVENTÁRIO: INV-NETOPS (consolidado)
+    ######################################################################
+    - name: Criar inventário INV-NETOPS
+      ansible.controller.inventory:
+        name: INV-NETOPS
+        description: Inventário consolidado NETOPS
+        organization: "{{ ac_organization }}"
+        state: present
+
+    - name: Criar grupos INV-NETOPS (cisco/arista/juniper/dc1/dc2)
+      ansible.controller.group:
+        name: "{{ item }}"
+        inventory: INV-NETOPS
+        state: present
+        variables: "{{ group_vars[item] }}"
+      loop: [ 'cisco', 'arista', 'juniper', 'dc1', 'dc2' ]
+
+    - name: Criar hosts ALL (com variáveis)
+      ansible.controller.host:
+        name: "{{ item.key }}"
+        inventory: INV-NETOPS
+        enabled: true
+        variables: "{{ item.value.vars }}"
+      loop: "{{ all_hosts | dict2items }}"
+
+    - name: Adicionar todos os hosts ao grupo dc1
+      ansible.controller.group:
+        name: dc1
+        inventory: INV-NETOPS
+        hosts: "{{ all_dc1_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar todos os hosts ao grupo dc2
+      ansible.controller.group:
+        name: dc2
+        inventory: INV-NETOPS
+        hosts: "{{ all_dc2_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar todos os hosts ao grupo cisco
+      ansible.controller.group:
+        name: cisco
+        inventory: INV-NETOPS
+        hosts: "{{ all_cisco_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar todos os hosts ao grupo arista
+      ansible.controller.group:
+        name: arista
+        inventory: INV-NETOPS
+        hosts: "{{ all_arista_hosts }}"
+        preserve_existing_hosts: true
+
+    - name: Adicionar todos os hosts ao grupo juniper
+      ansible.controller.group:
+        name: juniper
+        inventory: INV-NETOPS
+        hosts: "{{ all_juniper_hosts }}"
+        preserve_existing_hosts: true
