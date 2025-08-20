@@ -1,25 +1,13 @@
 ---
-- name: Coleta de facts Cisco/Arista/Juniper
-  hosts: all
+- name: Cisco facts + debug (read-only)
+  hosts: cisco
   gather_facts: no
-
   tasks:
-    - name: Coletar facts Cisco IOS
+    - name: Coletar facts (IOS)
       cisco.ios.ios_facts:
       register: f
-      when: ansible_network_os == "ios"
 
-    - name: Coletar facts Arista EOS
-      arista.eos.eos_facts:
-      register: f
-      when: ansible_network_os == "eos"
-
-    - name: Coletar facts Juniper Junos
-      junipernetworks.junos.junos_facts:
-      register: f
-      when: ansible_network_os == "junos"
-
-    - name: Mostrar informações básicas
+    - name: Exibir infos básicas
       debug:
         msg:
           - "Device:   {{ inventory_hostname }}"
@@ -27,4 +15,3 @@
           - "Modelo:   {{ f.ansible_facts.ansible_net_model    | default('N/D') }}"
           - "Versão:   {{ f.ansible_facts.ansible_net_version  | default('N/D') }}"
           - "Serial:   {{ f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
-      when: f is defined
