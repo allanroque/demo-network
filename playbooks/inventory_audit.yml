@@ -1,74 +1,56 @@
 ---
-- name: Coleta Cisco (read-only) - debug completo
+- name: Coleta Cisco (read-only) - tudo em debug
   hosts: cisco
   gather_facts: no
 
-  # Força uso de senha e evita chave/agent no network_cli
   vars:
+    # Força login por senha via network_cli (evita agent/chaves)
+    ansible_network_os: ios
+    ansible_connection: network_cli
+    ansible_network_cli_ssh_type: paramiko
+    ansible_paramiko_use_agent: false
+    ansible_paramiko_look_for_keys: false
 
-    # Comandos de show (pode ajustar livremente)
-    ios_show_cmds:
-      version: "show version"
-      inventory: "show inventory"
-      udi: "show license udi"
-      ip_int_brief: "show ip interface brief"
-      int_status: "show interfaces status"
-      cdp_detail: "show cdp neighbors detail"
-      lldp_detail: "show lldp neighbors detail"
-      vlan_brief: "show vlan brief"
-      etherchannel: "show etherchannel summary"
-      route_summary: "show ip route summary"
-      bgp_summary: "show ip bgp summary"
-      ospf_neighbor: "show ip ospf neighbor"
-      env_all: "show environment all"
-      power_inline: "show power inline"
-      logging_last: "show logging | last 50"
+    comandos_ios:
+      - show version
+      - show inventory
+      - show ip interface brief
+      - show cdp neighbors detail
+      - show lldp neighbors detail
 
   tasks:
-    - name: Sanity - show clock (não falha)
+    - name: Sanity - show clock
       cisco.ios.ios_command:
-        commands: "show clock"
+        commands: show clock
       register: sanity
       changed_when: false
       failed_when: false
 
-    - name: Coletar ios_facts (com enable; não falha)
+    - name: Coletar ios_facts
       cisco.ios.ios_facts:
       register: facts
       become: true
       become_method: enable
       failed_when: false
 
-    - name: Executar comandos de show (um por vez; não falha)
+    - name: Executar comandos de show
       cisco.ios.ios_command:
-        commands: "{{ item.value }}"
-      loop: "{{ ios_show_cmds | dict2items }}"
-      loop_control:
-        label: "{{ item.key }}"
+        commands: "{{ comandos_ios }}"
       register: shows
       become: true
       become_method: enable
       changed_when: false
       failed_when: false
 
-    - name: Inicializar dicionário consolidado dos shows
-      set_fact:
-        shows_map: {}
-
-    - name: Consolidar saída dos shows em {nome: stdout}
-      set_fact:
-        shows_map: "{{ shows_map | combine({ item.item.key: (item.stdout | default([])) }) }}"
-      loop: "{{ shows.results | default([]) }}"
-
-    # ======= DEBUG TOTAL =======
-    - name: DEBUG - sanity (show clock)
+    # ===== DEBUG TOTAL =====
+    - name: DEBUG sanity
       debug:
         var: sanity.stdout
 
-    - name: DEBUG - ios_facts completo
+    - name: DEBUG ios_facts
       debug:
-        var: facts
+        var: facts.ansible_facts
 
-    - name: DEBUG - todos os 'show' (mapa {nome: stdout})
+    - name: DEBUG shows (stdout)
       debug:
-        var: shows_map
+        var: shows.stdout
