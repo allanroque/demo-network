@@ -1,47 +1,62 @@
 ---
-- name: Auditoria de Inventário de Rede
+- name: Auditoria de Inventário de Rede (IOS/EOS/JUNOS)
   hosts: "{{ target_group | default('all') }}"
   gather_facts: no
+
+  vars:
+    # Força autenticação por senha nos plugins de rede
+    ssh_common_args: "-o PreferredAuthentications=password,keyboard-interactive -o PubkeyAuthentication=no"
+
   tasks:
+    - name: Forçar auth por senha para conexões de rede
+      set_fact:
+        ansible_ssh_common_args: "{{ ssh_common_args }}"
+      when: ansible_connection in ['network_cli', 'netconf']
 
-    - name: Cisco IOS facts
-      ios_facts:
-      register: ios_out
-      when: ansible_network_os == "ios"
+    # ===== Cisco IOS =====
+    - block:
+        - name: Coletar facts (IOS)
+          ios_facts:
+          register: vendor_out
+      when: ansible_network_os == 'ios'
+      rescue:
+        - set_fact: vendor_out: {}
 
-    - name: Mostrar infos Cisco
+    # ===== Arista EOS =====
+    - block:
+        - name: Coletar facts (EOS)
+          eos_facts:
+          register: vendor_out
+      when: ansible_network_os == 'eos'
+      rescue:
+        - set_fact: vendor_out: {}
+
+    # ===== Juniper Junos =====
+    - block:
+        - name: Coletar facts (JUNOS)
+          junos_facts:
+          register: vendor_out
+      when: ansible_network_os == 'junos'
+      rescue:
+        - set_fact: vendor_out: {}
+
+    # Normalização (um único dicionário independente do vendor)
+    - name: Normalizar saída
+      set_fact:
+        inv_norm:
+          device:   "{{ inventory_hostname }}"
+          os:       "{{ ansible_network_os }}"
+          hostname: "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_hostname | default('N/D') }}"
+          model:    "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_model    | default('N/D') }}"
+          version:  "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_version  | default('N/D') }}"
+          serial:   "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_serialnum| default('N/D') }}"
+
+    - name: Exibir inventário normalizado
       debug:
         msg:
-          - "Hostname: {{ ios_out.ansible_facts.ansible_net_hostname }}"
-          - "Modelo:   {{ ios_out.ansible_facts.ansible_net_model }}"
-          - "Versão:   {{ ios_out.ansible_facts.ansible_net_version }}"
-          - "Serial:   {{ ios_out.ansible_facts.ansible_net_serialnum }}"
-      when: ios_out is defined
-
-    - name: Arista EOS facts
-      eos_facts:
-      register: eos_out
-      when: ansible_network_os == "eos"
-
-    - name: Mostrar infos Arista
-      debug:
-        msg:
-          - "Hostname: {{ eos_out.ansible_facts.ansible_net_hostname }}"
-          - "Modelo:   {{ eos_out.ansible_facts.ansible_net_model }}"
-          - "Versão:   {{ eos_out.ansible_facts.ansible_net_version }}"
-          - "Serial:   {{ eos_out.ansible_facts.ansible_net_serialnum }}"
-      when: eos_out is defined
-
-    - name: Juniper Junos facts
-      junos_facts:
-      register: junos_out
-      when: ansible_network_os == "junos"
-
-    - name: Mostrar infos Juniper
-      debug:
-        msg:
-          - "Hostname: {{ junos_out.ansible_facts.ansible_net_hostname }}"
-          - "Modelo:   {{ junos_out.ansible_facts.ansible_net_model }}"
-          - "Versão:   {{ junos_out.ansible_facts.ansible_net_version }}"
-          - "Serial:   {{ junos_out.ansible_facts.ansible_net_serialnum }}"
-      when: junos_out is defined
+          - "Device:   {{ inv_norm.device }}"
+          - "OS:       {{ inv_norm.os }}"
+          - "Hostname: {{ inv_norm.hostname }}"
+          - "Modelo:   {{ inv_norm.model }}"
+          - "Versão:   {{ inv_norm.version }}"
+          - "Serial:   {{ inv_norm.serial }}"
