@@ -5,7 +5,7 @@
   gather_facts: false
 
   vars:
-    ac_organization: SEC
+    ac_organization: NETOPS
     ac_inventory: INV-NETOPS
 
     # Dados dos hosts
