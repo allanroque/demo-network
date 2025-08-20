@@ -1,4 +1,4 @@
----
+=---
 - name: Configuração base do ambiente NETOPS
   hosts: localhost
   connection: local
@@ -7,6 +7,7 @@
     ac_organization: NETOPS
     ac_inv_netops: INV-NETOPS
 
+    # Hosts e grupos a que pertencem
     netops_hosts:
       rtr1dc1:
         groups: [cisco, dc1]
@@ -89,6 +90,22 @@
           ansible_host: 18.223.241.112
           private_ip: 172.16.97.87
 
+    # Variáveis específicas por grupo
+    netops_groups:
+      cisco:
+        ansible_network_os: ios
+        ansible_connection: network_cli
+      arista:
+        ansible_network_os: eos
+        ansible_connection: network_cli
+        ansible_become: true
+        ansible_become_method: enable
+      juniper:
+        ansible_network_os: junos
+        ansible_connection: netconf
+      dc1: {}
+      dc2: {}
+
   tasks:
     - name: Garantir que a organização existe
       ansible.controller.organization:
@@ -102,17 +119,13 @@
         organization: "{{ ac_organization }}"
         state: present
 
-    - name: Criar grupos base
+    - name: Criar grupos base com variáveis
       ansible.controller.group:
-        name: "{{ item }}"
+        name: "{{ item.key }}"
         inventory: "{{ ac_inv_netops }}"
         state: present
-      loop:
-        - cisco
-        - arista
-        - juniper
-        - dc1
-        - dc2
+        variables: "{{ item.value }}"
+      loop: "{{ lookup('dict', netops_groups) }}"
 
     - name: Criar hosts com variáveis
       ansible.controller.host:
