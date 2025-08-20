@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   vars:
-    ac_organization: SEC
+    ac_organization: NETOPS
     ac_inv_netops: INV-NETOPS
 
     netops_hosts:
