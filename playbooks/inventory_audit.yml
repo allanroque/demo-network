@@ -1,56 +1,17 @@
 ---
-- name: Coleta Cisco (read-only) - tudo em debug
+- name: Cisco facts + debug (read-only)
   hosts: cisco
   gather_facts: no
-
-  vars:
-    # Força login por senha via network_cli (evita agent/chaves)
-    ansible_network_os: ios
-    ansible_connection: network_cli
-    ansible_network_cli_ssh_type: paramiko
-    ansible_paramiko_use_agent: false
-    ansible_paramiko_look_for_keys: false
-
-    comandos_ios:
-      - show version
-      - show inventory
-      - show ip interface brief
-      - show cdp neighbors detail
-      - show lldp neighbors detail
-
   tasks:
-    - name: Sanity - show clock
-      cisco.ios.ios_command:
-        commands: show clock
-      register: sanity
-      changed_when: false
-      failed_when: false
-
-    - name: Coletar ios_facts
+    - name: Coletar facts (IOS)
       cisco.ios.ios_facts:
-      register: facts
-      become: true
-      become_method: enable
-      failed_when: false
+      register: f
 
-    - name: Executar comandos de show
-      cisco.ios.ios_command:
-        commands: "{{ comandos_ios }}"
-      register: shows
-      become: true
-      become_method: enable
-      changed_when: false
-      failed_when: false
-
-    # ===== DEBUG TOTAL =====
-    - name: DEBUG sanity
+    - name: Exibir infos básicas
       debug:
-        var: sanity.stdout
-
-    - name: DEBUG ios_facts
-      debug:
-        var: facts.ansible_facts
-
-    - name: DEBUG shows (stdout)
-      debug:
-        var: shows.stdout
+        msg:
+          - "Device:   {{ inventory_hostname }}"
+          - "Hostname: {{ f.ansible_facts.ansible_net_hostname | default('N/D') }}"
+          - "Modelo:   {{ f.ansible_facts.ansible_net_model    | default('N/D') }}"
+          - "Versão:   {{ f.ansible_facts.ansible_net_version  | default('N/D') }}"
+          - "Serial:   {{ f.ansible_facts.ansible_net_serialnum| default('N/D') }}"
