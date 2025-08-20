@@ -4,14 +4,19 @@
   gather_facts: no
 
   vars:
-    # Força autenticação por senha nos plugins de rede
-    ssh_common_args: "-o PreferredAuthentications=password,keyboard-interactive -o PubkeyAuthentication=no"
+    ssh_common_args: >-
+      -o PreferredAuthentications=password,keyboard-interactive
+      -o PubkeyAuthentication=no
 
   tasks:
-    - name: Forçar auth por senha para conexões de rede
+    - name: Forçar autenticação por senha
       set_fact:
         ansible_ssh_common_args: "{{ ssh_common_args }}"
       when: ansible_connection in ['network_cli', 'netconf']
+
+    - name: Inicializar variável de saída
+      set_fact:
+        vendor_out: {}
 
     # ===== Cisco IOS =====
     - block:
@@ -20,7 +25,9 @@
           register: vendor_out
       when: ansible_network_os == 'ios'
       rescue:
-        - set_fact: vendor_out: {}
+        - name: Marcar coleta IOS como vazia
+          set_fact:
+            vendor_out: {}
 
     # ===== Arista EOS =====
     - block:
@@ -29,27 +36,30 @@
           register: vendor_out
       when: ansible_network_os == 'eos'
       rescue:
-        - set_fact: vendor_out: {}
+        - name: Marcar coleta EOS como vazia
+          set_fact:
+            vendor_out: {}
 
-    # ===== Juniper Junos =====
+    # ===== Juniper JUNOS =====
     - block:
         - name: Coletar facts (JUNOS)
           junos_facts:
           register: vendor_out
       when: ansible_network_os == 'junos'
       rescue:
-        - set_fact: vendor_out: {}
+        - name: Marcar coleta JUNOS como vazia
+          set_fact:
+            vendor_out: {}
 
-    # Normalização (um único dicionário independente do vendor)
-    - name: Normalizar saída
+    - name: Normalizar inventário
       set_fact:
         inv_norm:
           device:   "{{ inventory_hostname }}"
-          os:       "{{ ansible_network_os }}"
-          hostname: "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_hostname | default('N/D') }}"
-          model:    "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_model    | default('N/D') }}"
-          version:  "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_version  | default('N/D') }}"
-          serial:   "{{ ((vendor_out | default({})).ansible_facts | default({})).ansible_net_serialnum| default('N/D') }}"
+          os:       "{{ ansible_network_os | default('N/D') }}"
+          hostname: "{{ (vendor_out.ansible_facts | default({})).ansible_net_hostname | default('N/D') }}"
+          model:    "{{ (vendor_out.ansible_facts | default({})).ansible_net_model    | default('N/D') }}"
+          version:  "{{ (vendor_out.ansible_facts | default({})).ansible_net_version  | default('N/D') }}"
+          serial:   "{{ (vendor_out.ansible_facts | default({})).ansible_net_serialnum| default('N/D') }}"
 
     - name: Exibir inventário normalizado
       debug:
