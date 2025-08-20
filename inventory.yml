@@ -126,10 +126,9 @@
         name: "{{ group }}"
         inventory: "{{ ac_inventory }}"
         preserve_existing_hosts: true
-        hosts: "{{ item.key }}"
-      loop: "{{ hosts_data | dict2items }}"
+        hosts: "{{ item.0.key }}"
+      loop: "{{ hosts_data | dict2items | subelements('value.groups') }}"
       loop_control:
-        label: "{{ item.key }}"
+        label: "{{ item.0.key }} -> {{ item.1 }}"
       vars:
-        host_groups: "{{ item.value.groups }}"
-      with_items: "{{ item.value.groups | default([]) }}"
+        group: "{{ item.1 }}"
